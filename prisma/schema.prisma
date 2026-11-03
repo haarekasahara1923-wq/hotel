@@ -1,0 +1,609 @@
+// Royal Blue Heaven — Prisma Schema
+// Neon PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  MANAGER
+  RECEPTIONIST
+  ACCOUNTANT
+  EDITOR
+  GUEST
+}
+
+enum PubStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum RoomStatus {
+  AVAILABLE
+  MAINTENANCE
+  BLOCKED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+  NO_SHOW
+  REFUNDED
+}
+
+// ─── Users & Auth ────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String?
+  role         Role     @default(GUEST)
+  image        String?
+  emailVerified DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  bookings     Booking[]
+  reviews      Review[]
+  wishlist     Wishlist[]
+  activityLogs ActivityLog[]
+  accounts     Account[]
+  sessions     Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+}
+
+// OTP for guest email login
+model OtpToken {
+  id        String   @id @default(cuid())
+  email     String
+  otp       String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  @@index([email])
+}
+
+// ─── Site Settings & Branding ────────────────────────────────────────────────
+
+model SiteSetting {
+  id        String   @id @default("main")
+  data      Json     // branding, theme, contact, taxes, policies, announcements
+  updatedAt DateTime @updatedAt
+}
+
+// ─── CMS Pages ───────────────────────────────────────────────────────────────
+
+model Page {
+  id        String        @id @default(cuid())
+  slug      String        @unique
+  title     String
+  status    PubStatus     @default(PUBLISHED)
+  seo       Json?         // { title, description, ogImage, canonical, schema }
+  sections  PageSection[]
+  versions  PageVersion[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model PageSection {
+  id      String  @id @default(cuid())
+  pageId  String
+  page    Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type    String  // hero, booking-bar, about, features, rooms-showcase, gallery-strip, testimonials, cta, rich-text, image-text, video, team-grid, faq-block, map-block, contact-form, blog-preview, stats, custom-html
+  order   Int
+  visible Boolean @default(true)
+  content Json    // section-specific content fields
+
+  @@index([pageId, order])
+}
+
+model PageVersion {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  snapshot  Json     // full page + sections snapshot
+  createdBy String
+  label     String?
+  createdAt DateTime @default(now())
+
+  @@index([pageId, createdAt])
+}
+
+// ─── Media Library ───────────────────────────────────────────────────────────
+
+model Media {
+  id        String   @id @default(cuid())
+  url       String
+  publicId  String   @unique
+  type      String   // image | video
+  alt       String?
+  folder    String?
+  width     Int?
+  height    Int?
+  bytes     Int?
+  format    String?
+  usageCount Int     @default(0)
+  createdAt DateTime @default(now())
+}
+
+// ─── Rooms ───────────────────────────────────────────────────────────────────
+
+model RoomType {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  shortDesc   String
+  size        Int      // sq ft
+  maxAdults   Int
+  maxChildren Int
+  bedType     String
+  view        String?
+  baseRate    Decimal  @db.Decimal(10, 2)
+  amenities   String[]
+  images      String[]
+  video       String?
+  policies    Json?    // { checkIn, checkOut, smoking, pets, extraBed }
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rooms       Room[]
+  rates       RateRule[]
+  blackouts   BlackoutDate[]
+  wishlist    Wishlist[]
+}
+
+model Room {
+  id         String     @id @default(cuid())
+  number     String     @unique
+  roomTypeId String
+  roomType   RoomType   @relation(fields: [roomTypeId], references: [id])
+  floor      Int
+  status     RoomStatus @default(AVAILABLE)
+  notes      String?
+
+  bookingRooms BookingRoom[]
+  roomNights   RoomNight[]
+  holds        BookingHold[]
+}
+
+model RateRule {
+  id           String   @id @default(cuid())
+  roomTypeId   String
+  roomType     RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  name         String
+  startDate    DateTime
+  endDate      DateTime
+  daysOfWeek   Int[]    // 0=Sun, 1=Mon, ... 6=Sat. Empty = all days
+  adjustType   String   // percent | flat
+  adjustValue  Decimal  @db.Decimal(10, 2)
+  priority     Int      @default(0)
+  isActive     Boolean  @default(true)
+
+  @@index([roomTypeId, startDate, endDate])
+}
+
+model BlackoutDate {
+  id         String    @id @default(cuid())
+  roomTypeId String?   // null = all room types
+  roomType   RoomType? @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  date       DateTime
+  reason     String?
+}
+
+// ─── Bookings ────────────────────────────────────────────────────────────────
+
+model Booking {
+  id              String        @id @default(cuid())
+  code            String        @unique // RBH-YYYYMMDD-XXXX
+  guestName       String
+  guestEmail      String
+  guestPhone      String
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id])
+  checkIn         DateTime
+  checkOut        DateTime
+  adults          Int
+  children        Int
+  rooms           Int           @default(1)
+  status          BookingStatus @default(PENDING)
+  subtotal        Decimal       @db.Decimal(10, 2)
+  tax             Decimal       @db.Decimal(10, 2)
+  discount        Decimal       @db.Decimal(10, 2) @default(0)
+  total           Decimal       @db.Decimal(10, 2)
+  paid            Decimal       @db.Decimal(10, 2) @default(0)
+  couponCode      String?
+  paymentMode     String?       // full | advance | enquiry
+  advancePercent  Int?
+  source          String        @default("WEBSITE") // WEBSITE | WALKIN | PHONE | OTA
+  specialRequests String?
+  cancellationNote String?
+  adminNotes      String?
+  invoiceUrl      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  bookingRooms    BookingRoom[]
+  addons          BookingAddon[]
+  payments        Payment[]
+  modifications   ModificationRequest[]
+
+  @@index([guestEmail])
+  @@index([status, checkIn])
+}
+
+model BookingRoom {
+  id           String   @id @default(cuid())
+  bookingId    String
+  booking      Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  roomId       String
+  room         Room     @relation(fields: [roomId], references: [id])
+  roomTypeId   String
+  nightlyRates Json     // [{ date, rate }]
+  total        Decimal  @db.Decimal(10, 2)
+}
+
+// Unique per room per night — the double-booking guard
+model RoomNight {
+  id        String   @id @default(cuid())
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id])
+  date      DateTime @db.Date
+  bookingId String
+
+  @@unique([roomId, date])
+  @@index([date])
+}
+
+// 15-minute hold during payment
+model BookingHold {
+  id         String   @id @default(cuid())
+  roomId     String
+  room       Room     @relation(fields: [roomId], references: [id])
+  sessionId  String
+  checkIn    DateTime
+  checkOut   DateTime
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([expiresAt])
+  @@index([sessionId])
+}
+
+model Addon {
+  id       String  @id @default(cuid())
+  name     String
+  price    Decimal @db.Decimal(10, 2)
+  unit     String  // per_night | per_person | per_booking
+  icon     String?
+  isActive Boolean @default(true)
+  order    Int     @default(0)
+
+  bookingAddons BookingAddon[]
+}
+
+model BookingAddon {
+  id        String  @id @default(cuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  addonId   String
+  addon     Addon   @relation(fields: [addonId], references: [id])
+  qty       Int
+  price     Decimal @db.Decimal(10, 2)
+}
+
+model Payment {
+  id                 String   @id @default(cuid())
+  bookingId          String
+  booking            Booking  @relation(fields: [bookingId], references: [id])
+  razorpayOrderId    String?  @unique
+  razorpayPaymentId  String?  @unique
+  razorpayRefundId   String?
+  amount             Decimal  @db.Decimal(10, 2)
+  currency           String   @default("INR")
+  status             String   // created | paid | failed | refunded | partially_refunded
+  method             String?  // card | upi | netbanking | wallet
+  refundAmount       Decimal? @db.Decimal(10, 2)
+  refundReason       String?
+  meta               Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model ModificationRequest {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  type      String   // cancel | modify
+  reason    String?
+  newCheckIn DateTime?
+  newCheckOut DateTime?
+  status    String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  adminNote String?
+  createdAt DateTime @default(now())
+}
+
+// ─── Coupons & Offers ────────────────────────────────────────────────────────
+
+model Coupon {
+  id         String   @id @default(cuid())
+  code       String   @unique
+  type       String   // percent | flat
+  value      Decimal  @db.Decimal(10, 2)
+  minNights  Int?
+  minAmount  Decimal? @db.Decimal(10, 2)
+  validFrom  DateTime
+  validTo    DateTime
+  usageLimit Int?
+  used       Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+model Offer {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  description String
+  image       String?
+  terms       String?
+  couponCode  String?
+  validTo     DateTime?
+  isActive    Boolean   @default(true)
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+}
+
+// ─── Enquiries ───────────────────────────────────────────────────────────────
+
+model Enquiry {
+  id         String   @id @default(cuid())
+  type       String   // room | event | dining | spa | contact | career | general
+  name       String
+  email      String
+  phone      String
+  message    String?
+  meta       Json?    // extra fields per type
+  status     String   @default("NEW") // NEW | CONTACTED | CONVERTED | CLOSED
+  assignedTo String?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([status, createdAt])
+}
+
+// ─── Reviews ─────────────────────────────────────────────────────────────────
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  name      String
+  email     String?
+  rating    Int      // 1–5
+  title     String?
+  comment   String
+  photo     String?
+  source    String   @default("WEBSITE") // WEBSITE | GOOGLE | TRIPADVISOR
+  status    String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  featured  Boolean  @default(false)
+  adminReply String?
+  createdAt DateTime @default(now())
+
+  @@index([status, rating])
+}
+
+// ─── Blog ────────────────────────────────────────────────────────────────────
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String
+  content     String    // Tiptap JSON stringified or HTML
+  cover       String?
+  tags        String[]
+  author      String?
+  seo         Json?
+  status      PubStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ─── FAQs ────────────────────────────────────────────────────────────────────
+
+model Faq {
+  id       String @id @default(cuid())
+  question String
+  answer   String
+  category String
+  order    Int    @default(0)
+}
+
+// ─── Gallery ─────────────────────────────────────────────────────────────────
+
+model GalleryItem {
+  id       String  @id @default(cuid())
+  category String  // rooms | dining | events | spa | exterior | pool
+  url      String
+  type     String  // image | video
+  caption  String?
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+}
+
+// ─── Team ────────────────────────────────────────────────────────────────────
+
+model TeamMember {
+  id    String  @id @default(cuid())
+  name  String
+  role  String
+  photo String?
+  bio   String?
+  order Int     @default(0)
+}
+
+// ─── Dining ──────────────────────────────────────────────────────────────────
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  category    String   // starters | mains | desserts | beverages | breakfast
+  name        String
+  description String?
+  price       Decimal? @db.Decimal(10, 2)
+  isVeg       Boolean  @default(true)
+  image       String?
+  isSignature Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+}
+
+// ─── Events / Spa / Experiences / Careers ────────────────────────────────────
+
+model EventPackage {
+  id          String  @id @default(cuid())
+  title       String
+  type        String  // wedding | corporate | birthday | social
+  description String
+  image       String?
+  capacity    Int?
+  price       Decimal? @db.Decimal(10, 2)
+  features    String[]
+  isActive    Boolean @default(true)
+  order       Int     @default(0)
+}
+
+model SpaService {
+  id          String   @id @default(cuid())
+  name        String
+  category    String   // massage | facial | body | couples
+  description String
+  duration    Int      // minutes
+  price       Decimal  @db.Decimal(10, 2)
+  image       String?
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+}
+
+model Experience {
+  id          String  @id @default(cuid())
+  title       String
+  description String
+  image       String?
+  distance    String?
+  duration    String?
+  category    String? // heritage | nature | adventure | shopping
+  isActive    Boolean @default(true)
+  order       Int     @default(0)
+}
+
+model Career {
+  id          String  @id @default(cuid())
+  title       String
+  department  String
+  description String
+  requirements String?
+  type        String  @default("full-time") // full-time | part-time | contract
+  isOpen      Boolean @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model CareerApplication {
+  id        String   @id @default(cuid())
+  careerId  String?
+  name      String
+  email     String
+  phone     String
+  resumeUrl String?
+  message   String?
+  status    String   @default("NEW")
+  createdAt DateTime @default(now())
+}
+
+// ─── Wishlist ────────────────────────────────────────────────────────────────
+
+model Wishlist {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roomTypeId String
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, roomTypeId])
+}
+
+// ─── Notifications ───────────────────────────────────────────────────────────
+
+model NotificationTemplate {
+  id       String  @id @default(cuid())
+  key      String  @unique // booking_confirmed | enquiry_received | otp | etc.
+  channel  String  // email | whatsapp
+  subject  String?
+  body     String  // Handlebars / mustache template
+}
+
+// ─── Activity Log ────────────────────────────────────────────────────────────
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String   // create | update | delete | publish | login | etc.
+  entity    String   // Page | Booking | Review | etc.
+  entityId  String?
+  meta      Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([userId, createdAt])
+}
