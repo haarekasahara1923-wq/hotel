@@ -16,7 +16,7 @@ export function Preloader() {
     const timer = setTimeout(() => {
       setLoading(false)
       sessionStorage.setItem('rbh_preloader_shown', 'true')
-    }, 1800)
+    }, 800)
 
     return () => clearTimeout(timer)
   }, [])
