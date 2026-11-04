@@ -50,7 +50,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
-      <body className="min-h-screen flex flex-col bg-[#FBF8F1] text-[#1C1C1E]">
+      <body className="min-h-screen flex flex-col bg-white text-[#1C1C1E]">
         <Preloader />
         <Header />
         <main className="flex-1">{children}</main>

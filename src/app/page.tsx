@@ -181,17 +181,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── 1.5 PROMINENT BOOKING BAR (Elevated, No Overlap) ──────────────── */}
-      <div className="relative z-30 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 -mt-14 sm:-mt-16 mb-8">
-        <BookingSearchBar variant="glass" />
-      </div>
+      {/* ── 2. ROYAL STATS & STORY (Pure White Section) ────────────────── */}
+      <section className="relative bg-white pt-0 pb-20">
+        {/* Floating Booking Search Bar seated cleanly on the seam */}
+        <div className="relative z-30 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 -translate-y-1/2 mb-4">
+          <BookingSearchBar variant="glass" />
+        </div>
 
-      {/* ── 2. ROYAL STATS & STORY ────────────────────────────────────────── */}
-      <section className="pt-12 sm:pt-16 pb-20 bg-[#FBF8F1]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Key Stat Counters */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20 text-center">
-            <div className="p-6 bg-white border border-[#C9A24B]/20 rounded-sm shadow-sm">
+            <div className="p-6 bg-white border border-[#C9A24B]/30 rounded-sm shadow-sm">
               <span className="font-serif text-3xl sm:text-4xl text-[#1A3FA3] font-light block mb-1">
                 20
               </span>
