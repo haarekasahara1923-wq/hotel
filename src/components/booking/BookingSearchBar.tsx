@@ -59,7 +59,7 @@ export function BookingSearchBar({
 
   const containerStyle =
     variant === 'glass'
-      ? 'bg-[#0B1B3A]/85 backdrop-blur-md border border-[#C9A24B]/40 shadow-[0_8px_32px_rgba(11,27,58,0.5)]'
+      ? 'bg-[#0B1B3A] border-2 border-[#C9A24B]/50 shadow-[0_16px_48px_rgba(11,27,58,0.6)]'
       : 'bg-white border border-[#C9A24B]/30 shadow-lg'
 
   const labelColor = variant === 'glass' ? 'text-[#C9A24B]' : 'text-[#0B1B3A]'

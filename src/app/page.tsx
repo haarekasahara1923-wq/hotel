@@ -130,22 +130,22 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* ── 1. HERO SECTION ──────────────────────────────────────────────── */}
-      <section className="relative min-h-[92vh] flex flex-col justify-between bg-[#0B1B3A] text-white overflow-hidden">
+      <section className="relative min-h-[85vh] flex flex-col justify-center bg-[#0B1B3A] text-white">
         {/* Background Image with Dark Navy & Gold Vignette */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0 overflow-hidden">
           <Image
             src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920"
             alt="Royal Blue Heaven Hotel Exterior"
             fill
             priority
-            className="object-cover object-center brightness-[0.45] scale-105 transition-transform duration-10000 hover:scale-100"
+            className="object-cover object-center brightness-[0.40] scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1B3A] via-[#0B1B3A]/40 to-black/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1B3A] via-[#0B1B3A]/50 to-black/70" />
         </div>
 
         {/* Hero Content */}
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-28 sm:pt-36 pb-12 flex-1 flex flex-col justify-center items-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#C9A24B]/40 bg-[#0B1B3A]/60 backdrop-blur-sm mb-6">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-36 sm:pt-44 pb-24 flex-1 flex flex-col justify-center items-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#C9A24B]/40 bg-[#0B1B3A]/80 backdrop-blur-sm mb-6">
             <Sparkles className="w-3.5 h-3.5 text-[#C9A24B]" />
             <span className="text-xs uppercase tracking-[0.25em] text-[#C9A24B] font-medium">
               Boutique Luxury • 20 Royal Chambers
@@ -179,15 +179,15 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
-
-        {/* Floating Booking Search Bar */}
-        <div className="relative z-20 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 -mb-10 sm:-mb-12">
-          <BookingSearchBar variant="glass" />
-        </div>
       </section>
 
+      {/* ── 1.5 PROMINENT BOOKING BAR (Elevated, No Overlap) ──────────────── */}
+      <div className="relative z-30 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 -mt-14 sm:-mt-16 mb-8">
+        <BookingSearchBar variant="glass" />
+      </div>
+
       {/* ── 2. ROYAL STATS & STORY ────────────────────────────────────────── */}
-      <section className="pt-24 pb-20 bg-[#FBF8F1]">
+      <section className="pt-12 sm:pt-16 pb-20 bg-[#FBF8F1]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Key Stat Counters */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20 text-center">
