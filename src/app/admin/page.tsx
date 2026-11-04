@@ -129,6 +129,17 @@ export default function AdminDashboardPage() {
           >
             Visit Public Site
           </Link>
+          <button
+            onClick={() => {
+              document.cookie = 'authjs.session-token=; path=/; max-age=0'
+              document.cookie = 'next-auth.session-token=; path=/; max-age=0'
+              window.location.href = '/admin/login'
+            }}
+            className="border border-red-500/40 text-red-400 hover:bg-red-500/20 px-3 py-1.5 rounded-sm transition-colors flex items-center gap-1.5"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Sign Out</span>
+          </button>
         </div>
       </header>
 

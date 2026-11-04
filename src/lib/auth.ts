@@ -75,7 +75,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
 
     EmailProvider({
-      server: '',
+      server: process.env.EMAIL_SERVER || {
+        host: 'smtp.resend.com',
+        port: 465,
+        auth: {
+          user: 'resend',
+          pass: process.env.RESEND_API_KEY || 'resend_key',
+        },
+      },
       from: process.env.EMAIL_FROM ?? 'noreply@royalblueheaven.com',
       async sendVerificationRequest({ identifier, url }: { identifier: string; url: string }) {
         const email = identifier

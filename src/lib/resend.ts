@@ -4,7 +4,8 @@ import { Resend } from 'resend';
 // Client singleton
 // ---------------------------------------------------------------------------
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const apiKey = process.env.RESEND_API_KEY || 're_mock_placeholder_key';
+const resend = new Resend(apiKey);
 
 const FROM_ADDRESS =
   process.env.EMAIL_FROM ?? 'Royal Blue Heaven <noreply@royalbluehaven.com>';
@@ -150,6 +151,10 @@ export async function sendEmail({
   html,
   text,
 }: SendEmailOptions): Promise<void> {
+  if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 're_mock_placeholder_key') {
+    console.log(`[Resend Mock Email] To: ${to} | Subject: ${subject}`);
+    return;
+  }
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
     to: Array.isArray(to) ? to : [to],
