@@ -130,7 +130,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* ── 1. HERO SECTION ──────────────────────────────────────────────── */}
-      <section className="relative min-h-[85vh] flex flex-col justify-center bg-[#0B1B3A] text-white">
+      <section className="relative min-h-[92vh] flex flex-col justify-between bg-[#0B1B3A] text-white border-b-2 border-[#C9A24B]/40 pb-12">
         {/* Background Image with Dark Navy & Gold Vignette */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <Image
@@ -138,13 +138,13 @@ export default function HomePage() {
             alt="Royal Blue Heaven Hotel Exterior"
             fill
             priority
-            className="object-cover object-center brightness-[0.40] scale-105"
+            className="object-cover object-center brightness-[0.38] scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1B3A] via-[#0B1B3A]/50 to-black/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0B1B3A]/90 via-[#0B1B3A]/60 to-[#0B1B3A]" />
         </div>
 
         {/* Hero Content */}
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-36 sm:pt-44 pb-24 flex-1 flex flex-col justify-center items-center">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-32 sm:pt-40 pb-10 flex-1 flex flex-col justify-center items-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#C9A24B]/40 bg-[#0B1B3A]/80 backdrop-blur-sm mb-6">
             <Sparkles className="w-3.5 h-3.5 text-[#C9A24B]" />
             <span className="text-xs uppercase tracking-[0.25em] text-[#C9A24B] font-medium">
@@ -179,15 +179,15 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
-      </section>
 
-      {/* ── 2. ROYAL STATS & STORY (Pure White Section) ────────────────── */}
-      <section className="relative bg-white pt-0 pb-20">
-        {/* Floating Booking Search Bar seated cleanly on the seam */}
-        <div className="relative z-30 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 -translate-y-1/2 mb-4">
+        {/* ── PROMINENT BOOKING BAR (Fully inside blue hero, zero margin bleed) ── */}
+        <div className="relative z-20 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-4">
           <BookingSearchBar variant="glass" />
         </div>
+      </section>
 
+      {/* ── 2. ROYAL STATS & STORY (100% Pure White, completely clean) ──── */}
+      <section className="relative bg-white text-[#1C1C1E] pt-20 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Key Stat Counters */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20 text-center">
