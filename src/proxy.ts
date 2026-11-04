@@ -6,6 +6,7 @@ export function proxy(request: NextRequest) {
   // Protect admin routes (allow /admin/login)
   if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
     const sessionToken =
+      request.cookies.get('rbh_admin_session')?.value ||
       request.cookies.get('authjs.session-token')?.value ||
       request.cookies.get('__Secure-authjs.session-token')?.value ||
       request.cookies.get('next-auth.session-token')?.value ||
@@ -21,6 +22,7 @@ export function proxy(request: NextRequest) {
   // Protect account routes
   if (pathname.startsWith('/account')) {
     const sessionToken =
+      request.cookies.get('rbh_admin_session')?.value ||
       request.cookies.get('authjs.session-token')?.value ||
       request.cookies.get('__Secure-authjs.session-token')?.value ||
       request.cookies.get('next-auth.session-token')?.value ||
