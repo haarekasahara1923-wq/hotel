@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   MapPin,
   Phone,
@@ -10,16 +10,60 @@ import {
   Send,
   CheckCircle,
 } from 'lucide-react'
-import { SectionHeader } from '@/components/ui/SectionHeader'
 import { GoldDivider } from '@/components/ui/GoldDivider'
+
+interface ContactDetails {
+  hotelName?: string
+  address?: string
+  phone?: string
+  whatsappNumber?: string
+  email?: string
+  mapEmbedUrl?: string
+}
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false)
+  const [details, setDetails] = useState<ContactDetails>({
+    hotelName: 'The Royal Comfort Hotel & Restaurant',
+    address: 'DD Nagar, Gwalior, Madhya Pradesh 474011, India',
+    phone: '+91 98765 43210',
+    whatsappNumber: '+91 98765 43210',
+    email: 'info@royalcomfort.com',
+    mapEmbedUrl: '',
+  })
+
+  useEffect(() => {
+    const fetchContactDetails = async () => {
+      try {
+        const res = await fetch('/api/admin/branding')
+        if (res.ok) {
+          const data = await res.json()
+          if (data && Object.keys(data).length > 0) {
+            setDetails((prev) => ({
+              ...prev,
+              hotelName: data.hotelName || prev.hotelName,
+              address: data.address || prev.address,
+              phone: data.phone || prev.phone,
+              whatsappNumber: data.whatsappNumber || data.phone || prev.whatsappNumber,
+              email: data.email || prev.email,
+              mapEmbedUrl: data.mapEmbedUrl || prev.mapEmbedUrl,
+            }))
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load branding contact details:', err)
+      }
+    }
+    fetchContactDetails()
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitted(true)
   }
+
+  const cleanPhone = (details.phone || '').replace(/\s+/g, '')
+  const cleanWa = (details.whatsappNumber || details.phone || '').replace(/[^0-9]/g, '')
 
   return (
     <div className="bg-[#FBF8F1] min-h-screen pb-24">
@@ -58,7 +102,7 @@ export default function ContactPage() {
                       Address
                     </span>
                     <p className="font-light text-gray-600 mt-0.5">
-                      Royal Blue Heaven, DD Nagar, Gwalior, Madhya Pradesh 474011, India
+                      {details.address}
                     </p>
                     <span className="text-[11px] text-[#C9A24B] font-medium block mt-1">
                       (10 minutes from Gwalior Railway Station & Airport)
@@ -75,10 +119,10 @@ export default function ContactPage() {
                       Direct Telephone
                     </span>
                     <a
-                      href="tel:+919876543210"
-                      className="font-light text-gray-600 hover:text-[#C9A24B] block mt-0.5"
+                      href={`tel:${cleanPhone}`}
+                      className="font-light text-gray-600 hover:text-[#C9A24B] block mt-0.5 font-medium"
                     >
-                      +91 98765 43210 (24/7 Desk)
+                      {details.phone} (24/7 Desk)
                     </a>
                   </div>
                 </div>
@@ -92,12 +136,12 @@ export default function ContactPage() {
                       WhatsApp Concierge
                     </span>
                     <a
-                      href="https://wa.me/919876543210"
+                      href={`https://wa.me/${cleanWa}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-light text-gray-600 hover:text-[#25D366] block mt-0.5"
+                      className="font-light text-gray-600 hover:text-[#25D366] block mt-0.5 font-medium"
                     >
-                      +91 98765 43210 (Instant Assistance)
+                      {details.whatsappNumber || details.phone} (Instant Assistance)
                     </a>
                   </div>
                 </div>
@@ -111,10 +155,10 @@ export default function ContactPage() {
                       Electronic Mail
                     </span>
                     <a
-                      href="mailto:info@royalblueheaven.com"
-                      className="font-light text-gray-600 hover:text-[#C9A24B] block mt-0.5"
+                      href={`mailto:${details.email}`}
+                      className="font-light text-gray-600 hover:text-[#C9A24B] block mt-0.5 font-medium"
                     >
-                      info@royalblueheaven.com
+                      {details.email}
                     </a>
                   </div>
                 </div>
@@ -138,8 +182,12 @@ export default function ContactPage() {
             {/* Google Maps Embed */}
             <div className="bg-white border border-[#C9A24B]/30 rounded-sm overflow-hidden shadow-sm h-64 relative">
               <iframe
-                title="Royal Blue Heaven Map Location"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14316.536780775988!2d78.18283!3d26.21828!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3976c68c6e263c95%3A0x6b45063f1f3efd38!2sDeen%20Dayal%20Nagar%2C%20Gwalior%2C%20Madhya%20Pradesh!5e0!3m2!1sen!2sin!4v1700000000000"
+                title="Hotel Map Location"
+                src={
+                  details.mapEmbedUrl && details.mapEmbedUrl.startsWith('http')
+                    ? details.mapEmbedUrl
+                    : "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14316.536780775988!2d78.18283!3d26.21828!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3976c68c6e263c95%3A0x6b45063f1f3efd38!2sDeen%20Dayal%20Nagar%2C%20Gwalior%2C%20Madhya%20Pradesh!5e0!3m2!1sen!2sin!4v1700000000000"
+                }
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
@@ -212,7 +260,7 @@ export default function ContactPage() {
                       </label>
                       <select className="w-full px-3 py-2 text-xs border border-gray-200 rounded-sm focus:outline-none focus:border-[#C9A24B] bg-white">
                         <option>Room & Suite Reservations</option>
-                        <option>Maharaja Table Booking</option>
+                        <option>Table Booking & Dining</option>
                         <option>Banquet & Wedding Packages</option>
                         <option>Airport Chauffeur Transfer</option>
                         <option>General Concierge Query</option>
@@ -248,4 +296,3 @@ export default function ContactPage() {
     </div>
   )
 }
-

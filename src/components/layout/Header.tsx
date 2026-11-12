@@ -41,16 +41,53 @@ export function Header({
 
   const navLinks = [
     { name: 'Home', href: '/' },
-    { name: 'Rooms & Suites', href: '/rooms' },
+    { name: 'Rooms', href: '/rooms' },
     { name: 'Dining', href: '/dining' },
-    { name: 'Banquet & Events', href: '/events' },
-    { name: 'Spa & Wellness', href: '/spa' },
+    { name: 'Banquets', href: '/events' },
+    { name: 'Spa', href: '/spa' },
     { name: 'Experiences', href: '/experiences' },
     { name: 'Offers', href: '/offers' },
     { name: 'Gallery', href: '/gallery' },
     { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
   ]
+
+  // Format brand name into 2 balanced lines if long (e.g. "The Royal Comfort Hotel & Restaurant")
+  const renderBrandName = () => {
+    if (!hotelName) return null
+
+    // Check if it's the 2-part brand format
+    if (hotelName.toLowerCase().includes('hotel') || hotelName.toLowerCase().includes('&') || hotelName.length > 20) {
+      // Split intelligently: first part (The Royal Comfort) and second part (Hotel & Restaurant)
+      const parts = hotelName.split(/(?=Hotel|Restaurant|Resort|Palace|Suites)/i)
+      if (parts.length >= 2) {
+        const line1 = parts[0].trim()
+        const line2 = parts.slice(1).join(' ').trim()
+        return (
+          <div className="flex flex-col justify-center leading-tight">
+            <span className="font-serif text-sm sm:text-base lg:text-lg font-normal text-[#FBF8F1] tracking-wider uppercase block whitespace-nowrap">
+              {line1}
+            </span>
+            <span className="font-serif text-[11px] sm:text-xs lg:text-sm font-light text-[#C9A24B] tracking-widest uppercase block whitespace-nowrap -mt-0.5">
+              {line2}
+            </span>
+          </div>
+        )
+      }
+    }
+
+    // Default single line
+    return (
+      <div>
+        <span className="font-serif text-sm sm:text-lg font-normal text-[#FBF8F1] tracking-wider uppercase block leading-none whitespace-nowrap">
+          {hotelName}
+        </span>
+        <span className="text-[9px] uppercase tracking-[0.2em] text-[#C9A24B] font-semibold block mt-1">
+          Where Royalty Meets Serenity
+        </span>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -90,45 +127,38 @@ export function Header({
       <header
         className={`sticky top-0 z-40 w-full transition-all duration-300 ${
           isScrolled
-            ? 'bg-[#0B1B3A] shadow-2xl border-b border-[#C9A24B]/30 py-2.5'
-            : 'bg-[#0B1B3A]/95 backdrop-blur-md border-b border-[#C9A24B]/25 py-3.5'
+            ? 'bg-[#0B1B3A] shadow-2xl border-b border-[#C9A24B]/30 py-2'
+            : 'bg-[#0B1B3A]/95 backdrop-blur-md border-b border-[#C9A24B]/25 py-2 sm:py-2.5'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
           {/* Royal Crest Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
             {logoUrl ? (
               <img
                 src={logoUrl}
                 alt={hotelName}
-                className="w-11 h-11 object-contain rounded-full border-2 border-[#C9A24B] bg-[#0B1B3A]"
+                className="w-10 h-10 object-contain rounded-full border-2 border-[#C9A24B] bg-[#0B1B3A]"
               />
             ) : (
-              <div className="w-11 h-11 rounded-full border-2 border-[#C9A24B] flex items-center justify-center bg-gradient-to-br from-[#1A3FA3] to-[#0B1B3A] shadow-md group-hover:scale-105 transition-transform duration-300">
-                <span className="font-serif text-[#C9A24B] font-bold text-lg tracking-wider">
+              <div className="w-10 h-10 rounded-full border-2 border-[#C9A24B] flex items-center justify-center bg-gradient-to-br from-[#1A3FA3] to-[#0B1B3A] shadow-md group-hover:scale-105 transition-transform duration-300 shrink-0">
+                <span className="font-serif text-[#C9A24B] font-bold text-base tracking-wider">
                   RBH
                 </span>
               </div>
             )}
-            <div>
-              <span className="font-serif text-lg sm:text-2xl font-normal text-[#FBF8F1] tracking-wider uppercase block leading-none">
-                {hotelName}
-              </span>
-              <span className="text-[10px] uppercase tracking-[0.25em] text-[#C9A24B] font-semibold block mt-1">
-                Where Royalty Meets Serenity
-              </span>
-            </div>
+            {renderBrandName()}
           </Link>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden lg:flex items-center gap-2.5 xl:gap-4.5">
+          <nav className="hidden lg:flex items-center gap-2 xl:gap-3.5 2xl:gap-4 shrink-0">
             {navLinks.map((link) => {
               const active = pathname === link.href
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`text-[11px] xl:text-xs tracking-wider uppercase whitespace-nowrap transition-colors duration-200 relative py-1 font-medium ${
+                  className={`text-[11px] xl:text-[11.5px] tracking-wider uppercase whitespace-nowrap transition-colors duration-200 relative py-1 font-medium ${
                     active
                       ? 'text-[#C9A24B] font-semibold'
                       : 'text-gray-200 hover:text-[#C9A24B]'
@@ -144,10 +174,10 @@ export function Header({
           </nav>
 
           {/* Book Now Button */}
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-3 shrink-0">
             <Link
               href="/book"
-              className="bg-gradient-to-r from-[#C9A24B] via-[#E8D5A3] to-[#C9A24B] text-[#0B1B3A] font-bold text-xs uppercase tracking-widest px-5 py-2.5 rounded-sm hover:brightness-110 transition-all duration-300 shadow-[0_2px_12px_rgba(201,162,75,0.35)]"
+              className="bg-gradient-to-r from-[#C9A24B] via-[#E8D5A3] to-[#C9A24B] text-[#0B1B3A] font-bold text-xs uppercase tracking-widest px-4 py-2 rounded-sm hover:brightness-110 transition-all duration-300 shadow-[0_2px_12px_rgba(201,162,75,0.35)] whitespace-nowrap"
             >
               Book Now
             </Link>

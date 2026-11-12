@@ -237,14 +237,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Content Area */}
-      {/* On desktop: push content right of sidebar. On mobile: full width (sidebar is overlay) */}
-      <div className="flex-1 flex flex-col min-h-screen transition-all duration-300 w-full lg:w-auto"
-        style={{ '--sidebar-w': collapsed ? '64px' : '240px' } as React.CSSProperties}
-      >
+      {/* On desktop: push content right of sidebar using responsive margin. On mobile: full width */}
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 w-full min-w-0 ${collapsed ? 'lg:pl-16' : 'lg:pl-60'}`}>
         {/* Desktop Top bar */}
         <div
           className="hidden lg:flex sticky top-0 z-20 items-center justify-between px-6 py-3 border-b"
-          style={{ background: '#fff', borderColor: 'rgba(201,162,75,0.15)', minHeight: '56px', marginLeft: 0 }}
+          style={{ background: '#fff', borderColor: 'rgba(201,162,75,0.15)', minHeight: '56px' }}
         >
           <button
             onClick={() => setCollapsed(!collapsed)}
@@ -284,8 +282,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Link>
         </div>
 
-        {/* Page content - add bottom padding on mobile for bottom nav */}
-        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
+        {/* Page content - add bottom padding on mobile for bottom nav, ensure overflow-x-auto for tables */}
+        <main className="flex-1 overflow-y-auto overflow-x-auto pb-16 lg:pb-0 w-full">
           {children}
         </main>
       </div>
