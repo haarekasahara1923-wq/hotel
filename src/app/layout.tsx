@@ -23,26 +23,46 @@ const inter = Inter({
   display: 'swap',
 })
 
-export const metadata: Metadata = {
-  title: 'Royal Blue Heaven | Luxury Hotel in Gwalior, Madhya Pradesh',
-  description:
-    'Experience palatial luxury at Royal Blue Heaven in DD Nagar, Gwalior. 20 opulent rooms & suites, fine dining, Ayurvedic spa, and banquet facilities. Book online with best rate guarantee.',
-  keywords: [
-    'luxury hotel gwalior',
-    'royal blue heaven',
-    'best hotel in gwalior',
-    'palace hotel madhya pradesh',
-    'royal suite gwalior',
-    'wedding venue gwalior',
-  ],
-  authors: [{ name: 'Royal Blue Heaven' }],
-  metadataBase: new URL('https://royalblueheaven.com'),
-  openGraph: {
-    title: 'Royal Blue Heaven | Luxury Hotel in Gwalior',
-    description:
-      'Where Royalty Meets Serenity. Experience 5-star heritage luxury in Gwalior.',
-    images: ['https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200'],
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings()
+
+  const hotelName = settings.hotelName || 'The Royal Comfort Hotel & Restaurant'
+  const tagline = settings.tagline || 'Luxury Hotel in Gwalior, Madhya Pradesh'
+  const description =
+    settings.defaultMetaDesc ||
+    `Experience palatial luxury at ${hotelName} in DD Nagar, Gwalior. Opulent rooms & suites, fine dining, Ayurvedic spa, and banquet facilities. Book online with best rate guarantee.`
+  const title = settings.defaultMetaTitle || `${hotelName} | ${tagline}`
+  const ogImage = settings.ogImageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200'
+  const faviconUrl = settings.faviconUrl
+
+  return {
+    title,
+    description,
+    keywords: [
+      `luxury hotel gwalior`,
+      hotelName.toLowerCase(),
+      'best hotel in gwalior',
+      'palace hotel madhya pradesh',
+      'hotel & restaurant gwalior',
+      'wedding venue gwalior',
+    ],
+    authors: [{ name: hotelName }],
+    metadataBase: new URL('https://royalblueheaven.com'),
+    icons: faviconUrl
+      ? {
+          icon: faviconUrl,
+          shortcut: faviconUrl,
+          apple: faviconUrl,
+        }
+      : {
+          icon: '/favicon.ico',
+        },
+    openGraph: {
+      title: `${hotelName} | ${tagline}`,
+      description: `Where Royalty Meets Serenity. Experience luxury hospitality at ${hotelName}, Gwalior.`,
+      images: [ogImage],
+    },
+  }
 }
 
 export default async function RootLayout({
