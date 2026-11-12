@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, User, Phone, Sparkles } from 'lucide-react'
+import { Menu, X, User, Phone, Sparkles, QrCode } from 'lucide-react'
 import { AnnouncementBar } from './AnnouncementBar'
+import { MenuQRModal } from '@/components/ui/MenuQRModal'
 
 interface HeaderProps {
   hotelName?: string
@@ -25,6 +26,7 @@ export function Header({
 }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [qrOpen, setQrOpen] = useState(false)
   const pathname = usePathname()
 
   useEffect(() => {
@@ -91,6 +93,7 @@ export function Header({
 
   return (
     <>
+      <MenuQRModal isOpen={qrOpen} onClose={() => setQrOpen(false)} />
       {announcement?.enabled && (
         <AnnouncementBar text={announcement.text} link={announcement.link} />
       )}
@@ -173,7 +176,7 @@ export function Header({
             })}
           </nav>
 
-          {/* Book Now Button */}
+          {/* Book Now Button + MENU QR */}
           <div className="hidden sm:flex items-center gap-3 shrink-0">
             <Link
               href="/book"
@@ -181,6 +184,19 @@ export function Header({
             >
               Book Now
             </Link>
+            <button
+              onClick={() => setQrOpen(true)}
+              className="flex items-center gap-1.5 font-bold text-[11px] uppercase tracking-wider px-3 py-2 rounded-sm transition-all duration-200 whitespace-nowrap border"
+              style={{
+                background: 'linear-gradient(135deg, #0B1B3A 0%, #1A3FA3 100%)',
+                color: '#C9A24B',
+                borderColor: '#C9A24B',
+              }}
+              aria-label="Show Menu QR Code"
+            >
+              <QrCode style={{ width: '13px', height: '13px' }} />
+              Menu QR
+            </button>
           </div>
 
           {/* Mobile menu button */}
@@ -220,6 +236,19 @@ export function Header({
                   {link.name}
                 </Link>
               ))}
+
+              {/* MENU QR Button in mobile drawer */}
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false)
+                  setQrOpen(true)
+                }}
+                className="text-sm tracking-wider uppercase py-2 border-b border-white/10 flex items-center gap-2 font-semibold"
+                style={{ color: '#C9A24B', background: 'none', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', textAlign: 'left', padding: '8px 0' }}
+              >
+                <QrCode style={{ width: '16px', height: '16px', color: '#C9A24B' }} />
+                Menu QR — Scan to Order Food
+              </button>
               <div className="pt-4 flex flex-col gap-3">
                 <Link
                   href="/lookup"
