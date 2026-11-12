@@ -130,17 +130,18 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* ── 1. HERO SECTION ──────────────────────────────────────────────── */}
-      <section className="relative min-h-[92vh] flex flex-col justify-between bg-[#0B1B3A] text-white border-b-2 border-[#C9A24B]/40 pb-12">
+      <section className="relative min-h-[92vh] flex flex-col justify-between border-b-2 border-[#C9A24B]/40 pb-12" style={{ background: '#0B1B3A', color: 'white', isolation: 'isolate' }}>
         {/* Background Image with Dark Navy & Gold Vignette */}
-        <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0 z-0 overflow-hidden" style={{ background: '#0B1B3A' }}>
           <Image
             src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920"
             alt="Royal Blue Heaven Hotel Exterior"
             fill
             priority
+            placeholder="empty"
             className="object-cover object-center brightness-[0.38] scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0B1B3A]/90 via-[#0B1B3A]/60 to-[#0B1B3A]" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(11,27,58,0.9) 0%, rgba(11,27,58,0.6) 50%, rgba(11,27,58,1) 100%)' }} />
         </div>
 
         {/* Hero Content */}
@@ -187,7 +188,7 @@ export default function HomePage() {
       </section>
 
       {/* ── 2. ROYAL STATS & STORY (100% Pure White, completely clean) ──── */}
-      <section className="relative bg-white text-[#1C1C1E] pt-20 pb-20">
+      <section style={{ background: '#FFFFFF', color: '#1C1C1E', isolation: 'isolate', position: 'relative', zIndex: 1 }} className="pt-20 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Key Stat Counters */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20 text-center">
@@ -233,6 +234,7 @@ export default function HomePage() {
                   src="https://images.unsplash.com/photo-1540541338287-41700207dee6?w=1000"
                   alt="Opulent Royal Blue Heaven Lobby"
                   fill
+                  placeholder="empty"
                   className="object-cover"
                 />
               </div>
@@ -301,6 +303,7 @@ export default function HomePage() {
                       src={room.image}
                       alt={room.name}
                       fill
+                      placeholder="empty"
                       className="object-cover group-hover:scale-105 transition-transform duration-700"
                     />
                     <div className="absolute top-3 right-3 bg-[#0B1B3A]/80 backdrop-blur-md px-3 py-1 rounded-sm border border-[#C9A24B]/40 text-[#C9A24B] text-xs font-semibold">
@@ -457,6 +460,7 @@ export default function HomePage() {
                     src={item.image}
                     alt={item.title}
                     fill
+                    placeholder="empty"
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute bottom-2 left-2 bg-[#0B1B3A]/80 backdrop-blur-sm px-2.5 py-0.5 rounded-sm text-[10px] text-[#C9A24B] flex items-center gap-1">

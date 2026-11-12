@@ -216,9 +216,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         />
       )}
 
-      {/* Mobile Sidebar */}
+      {/* Mobile Sidebar (drawer) */}
       <aside
-        className="lg:hidden flex flex-col fixed top-0 bottom-0 left-0 z-50 w-64 transition-transform duration-300"
+        className="lg:hidden flex flex-col fixed top-0 bottom-0 left-0 z-50 w-72 transition-transform duration-300"
         style={{
           background: '#0B1B3A',
           borderRight: '1px solid rgba(201,162,75,0.2)',
@@ -229,6 +229,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <button
           onClick={() => setMobileOpen(false)}
           className="absolute top-4 right-4 text-gray-400 hover:text-white"
+          aria-label="Close menu"
         >
           <X className="w-5 h-5" />
         </button>
@@ -236,14 +237,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Content Area */}
-      <div
-        className="flex-1 flex flex-col min-h-screen transition-all duration-300"
-        style={{ marginLeft: collapsed ? '64px' : '240px' }}
+      {/* On desktop: push content right of sidebar. On mobile: full width (sidebar is overlay) */}
+      <div className="flex-1 flex flex-col min-h-screen transition-all duration-300 w-full lg:w-auto"
+        style={{ '--sidebar-w': collapsed ? '64px' : '240px' } as React.CSSProperties}
       >
-        {/* Top bar - hidden on mobile since sidebar is overlay */}
+        {/* Desktop Top bar */}
         <div
           className="hidden lg:flex sticky top-0 z-20 items-center justify-between px-6 py-3 border-b"
-          style={{ background: '#fff', borderColor: 'rgba(201,162,75,0.15)', minHeight: '56px' }}
+          style={{ background: '#fff', borderColor: 'rgba(201,162,75,0.15)', minHeight: '56px', marginLeft: 0 }}
         >
           <button
             onClick={() => setCollapsed(!collapsed)}
@@ -274,20 +275,68 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           className="lg:hidden flex items-center justify-between px-4 py-3 border-b sticky top-0 z-20"
           style={{ background: '#0B1B3A', borderColor: 'rgba(201,162,75,0.2)' }}
         >
-          <button onClick={() => setMobileOpen(true)} className="text-[#C9A24B]">
+          <button onClick={() => setMobileOpen(true)} className="text-[#C9A24B] p-1" aria-label="Open menu">
             <Menu className="w-6 h-6" />
           </button>
           <span className="font-serif text-white text-sm tracking-wide">Admin Panel</span>
-          <Link href="/" target="_blank" className="text-[10px] text-gray-400 uppercase tracking-wider">
+          <Link href="/" target="_blank" className="text-[10px] text-[#C9A24B] uppercase tracking-wider">
             Site ↗
           </Link>
         </div>
 
-        {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
+        {/* Page content - add bottom padding on mobile for bottom nav */}
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
           {children}
         </main>
       </div>
+
+      {/* ── MOBILE BOTTOM NAVIGATION BAR ── */}
+      <nav
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around border-t"
+        style={{ background: '#0B1B3A', borderColor: 'rgba(201,162,75,0.3)', height: '60px' }}
+      >
+        {[
+          { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+          { label: 'Bookings', href: '/admin/bookings', icon: CalendarCheck },
+          { label: 'Rooms', href: '/admin/rooms', icon: BedDouble },
+          { label: 'Gallery', href: '/admin/gallery', icon: Image },
+          { label: 'More', href: '#', icon: Menu, action: () => setMobileOpen(true) },
+        ].map((item) => {
+          const Icon = item.icon
+          const isActive = item.href !== '#' && (pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href)))
+          return (
+            <button
+              key={item.label}
+              onClick={() => {
+                if (item.action) {
+                  item.action()
+                } else {
+                  window.location.href = item.href
+                }
+              }}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '3px',
+                padding: '6px 12px',
+                color: isActive ? '#C9A24B' : 'rgba(255,255,255,0.5)',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                minWidth: '56px',
+              }}
+              aria-label={item.label}
+            >
+              <Icon style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+              <span style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>
+                {item.label}
+              </span>
+            </button>
+          )
+        })}
+      </nav>
     </div>
   )
 }

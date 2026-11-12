@@ -6,6 +6,8 @@ import { Footer } from '@/components/layout/Footer'
 import { WhatsAppButton } from '@/components/layout/WhatsAppButton'
 import { BackToTop } from '@/components/layout/BackToTop'
 import { Preloader } from '@/components/layout/Preloader'
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav'
+import { getSiteSettings } from '@/lib/getSiteSettings'
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -43,20 +45,46 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const settings = await getSiteSettings()
+
   return (
     <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
       <body className="min-h-screen flex flex-col bg-white text-[#1C1C1E]">
         <Preloader />
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <WhatsAppButton />
+        <Header
+          hotelName={settings.hotelName}
+          phone={settings.phone}
+          logoUrl={settings.logoLightUrl || settings.logoDarkUrl}
+          announcement={
+            settings.announcementEnabled && settings.announcementText
+              ? {
+                  enabled: true,
+                  text: settings.announcementText,
+                  link: settings.announcementLink || '/offers',
+                }
+              : undefined
+          }
+        />
+        <main className="flex-1 pb-16 lg:pb-0">{children}</main>
+        <Footer
+          hotelName={settings.hotelName}
+          tagline={settings.tagline}
+          address={settings.address}
+          phone={settings.phone}
+          email={settings.email}
+          gstNumber={settings.gstNumber}
+        />
+        <WhatsAppButton
+          number={settings.whatsappNumber || settings.phone}
+          hotelName={settings.hotelName}
+        />
         <BackToTop />
+        <MobileBottomNav />
       </body>
     </html>
   )

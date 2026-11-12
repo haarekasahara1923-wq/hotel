@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth } from '@/lib/adminAuth'
 
 export async function GET() {
-  if (!(await checkAdminAuth())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   try {
     const setting = await prisma.siteSetting.findUnique({
       where: { id: 'main' },
@@ -30,6 +27,14 @@ export async function POST(req: NextRequest) {
       update: { data },
       create: { id: 'main', data },
     })
+
+    // Real-time revalidation across all public pages and layouts
+    try {
+      revalidatePath('/', 'layout')
+    } catch (e) {
+      console.warn('Revalidation warning:', e)
+    }
+
     return NextResponse.json({ success: true, data: updated.data })
   } catch (error) {
     console.error('[Admin Branding POST Error]', error)

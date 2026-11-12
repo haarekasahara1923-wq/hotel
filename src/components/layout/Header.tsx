@@ -9,6 +9,7 @@ import { AnnouncementBar } from './AnnouncementBar'
 interface HeaderProps {
   hotelName?: string
   phone?: string
+  logoUrl?: string
   announcement?: {
     enabled: boolean
     text: string
@@ -19,6 +20,7 @@ interface HeaderProps {
 export function Header({
   hotelName = 'Royal Blue Heaven',
   phone = '+91 98765 43210',
+  logoUrl,
   announcement,
 }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -95,11 +97,19 @@ export function Header({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           {/* Royal Crest Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-11 h-11 rounded-full border-2 border-[#C9A24B] flex items-center justify-center bg-gradient-to-br from-[#1A3FA3] to-[#0B1B3A] shadow-md group-hover:scale-105 transition-transform duration-300">
-              <span className="font-serif text-[#C9A24B] font-bold text-lg tracking-wider">
-                RBH
-              </span>
-            </div>
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={hotelName}
+                className="w-11 h-11 object-contain rounded-full border-2 border-[#C9A24B] bg-[#0B1B3A]"
+              />
+            ) : (
+              <div className="w-11 h-11 rounded-full border-2 border-[#C9A24B] flex items-center justify-center bg-gradient-to-br from-[#1A3FA3] to-[#0B1B3A] shadow-md group-hover:scale-105 transition-transform duration-300">
+                <span className="font-serif text-[#C9A24B] font-bold text-lg tracking-wider">
+                  RBH
+                </span>
+              </div>
+            )}
             <div>
               <span className="font-serif text-lg sm:text-2xl font-normal text-[#FBF8F1] tracking-wider uppercase block leading-none">
                 {hotelName}

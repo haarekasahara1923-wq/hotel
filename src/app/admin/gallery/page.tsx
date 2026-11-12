@@ -11,6 +11,9 @@ import {
   Play,
   Film,
   SlidersHorizontal,
+  Upload,
+  Loader2,
+  CheckCircle,
 } from 'lucide-react'
 
 // Brand SVG helpers
@@ -48,9 +51,10 @@ export default function GalleryAdminPage() {
   const [activeCategory, setActiveCategory] = useState('ALL')
   const [showAddModal, setShowAddModal] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [uploadingFile, setUploadingFile] = useState(false)
 
-  // Form
-  const [addMode, setAddMode] = useState<'url' | 'embed'>('url')
+  // Form: device upload or social embed
+  const [addMode, setAddMode] = useState<'upload' | 'embed'>('upload')
   const [formData, setFormData] = useState({
     category: 'rooms',
     url: '',
@@ -93,8 +97,48 @@ export default function GalleryAdminPage() {
     }
   }
 
+  const handleDeviceFileUpload = async (file: File) => {
+    setUploadingFile(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('alt', formData.caption || file.name)
+      fd.append('folder', 'gallery')
+
+      const res = await fetch('/api/admin/media/upload', {
+        method: 'POST',
+        body: fd,
+        credentials: 'include',
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data.url) {
+          setFormData((prev) => ({
+            ...prev,
+            url: data.url,
+            type: file.type.startsWith('video') ? 'video' : 'image',
+            caption: prev.caption || file.name.replace(/\.[^/.]+$/, ''),
+          }))
+        }
+      } else {
+        alert('File upload failed. Please try a different photo or video.')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Upload error')
+    } finally {
+      setUploadingFile(false)
+    }
+  }
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!formData.url) {
+      alert('Please select a photo/video from your device or enter a social link')
+      return
+    }
+
     setSubmitting(true)
     try {
       let finalType = formData.type
@@ -139,148 +183,137 @@ export default function GalleryAdminPage() {
   const categories = ['ALL', 'rooms', 'dining', 'events', 'spa', 'exterior', 'pool']
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6 max-w-7xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-serif text-[#0B1B3A] font-light">Gallery & Media Links Manager</h1>
+          <h1 className="text-xl sm:text-2xl font-serif text-[#0B1B3A] font-light">Gallery & Media Manager</h1>
           <p className="text-xs text-gray-500 mt-1">
-            Showcase photographs, hotel walk-through videos, YouTube shorts, Instagram reels & Facebook clips
+            Upload high-resolution photos and videos directly from your device, plus embed YouTube, Instagram Reels & Facebook videos
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={fetchItems}
-            disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-sm hover:bg-gray-50 shadow-sm"
+            className="p-2 border rounded-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            title="Refresh gallery"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => {
+              setFormData({ category: 'rooms', url: '', type: 'image', caption: '', order: 0 })
+              setShowAddModal(true)
+            }}
             className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-[#0B1B3A] rounded-sm shadow-sm transition-all hover:brightness-110"
             style={{ background: '#C9A24B' }}
           >
-            <Plus className="w-3.5 h-3.5" />
-            Add Image / Video / Reel
+            <Plus className="w-4 h-4" />
+            Add Media / Video
           </button>
         </div>
       </div>
 
       {/* Category Tabs */}
-      <div className="flex flex-wrap gap-1 bg-white p-2 rounded-sm border border-gray-200 shadow-sm text-xs">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b text-xs">
         {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`px-3 py-1.5 rounded-sm font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-sm capitalize whitespace-nowrap transition-colors ${
               activeCategory === cat
-                ? 'bg-[#0B1B3A] text-white'
+                ? 'bg-[#0B1B3A] text-white font-medium'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            {cat === 'ALL' ? 'All Gallery' : cat.toUpperCase()}
+            {cat === 'ALL' ? 'All Media' : cat}
           </button>
         ))}
       </div>
 
       {/* Gallery Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {items.length > 0 ? (
+        {loading ? (
+          <div className="col-span-full py-16 text-center text-xs text-gray-400">
+            Loading palace gallery...
+          </div>
+        ) : items.length > 0 ? (
           items.map((item) => {
             const isYoutube = item.type === 'youtube'
             const isInstagram = item.type === 'instagram'
             const isFacebook = item.type === 'facebook'
             const isVideo = item.type === 'video'
-            const ytId = isYoutube ? getYoutubeId(item.url) : null
 
             return (
               <div
                 key={item.id}
-                className="group relative bg-white border border-gray-200 rounded-sm shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition-all"
+                className="bg-white border rounded-sm overflow-hidden shadow-sm group hover:shadow-md transition-all flex flex-col justify-between"
               >
-                {/* Media Preview Area */}
-                <div className="relative h-48 bg-slate-900 flex items-center justify-center overflow-hidden">
-                  {isYoutube && ytId ? (
-                    <img
-                      src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`}
-                      alt={item.caption || 'YouTube video'}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                    />
-                  ) : isVideo ? (
-                    <div className="flex flex-col items-center justify-center text-white/80 gap-2">
-                      <Film className="w-8 h-8 text-[#C9A24B]" />
-                      <span className="text-[10px] uppercase font-mono">Hotel MP4 Video</span>
+                {/* Media preview */}
+                <div className="relative aspect-[4/3] bg-gray-900 overflow-hidden flex items-center justify-center">
+                  {isYoutube ? (
+                    <div className="w-full h-full relative">
+                      <img
+                        src={`https://img.youtube.com/vi/${getYoutubeId(item.url)}/hqdefault.jpg`}
+                        alt={item.caption || 'YouTube'}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center">
+                          <Play className="w-5 h-5 ml-0.5 fill-current" />
+                        </div>
+                      </div>
+                      <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded font-semibold flex items-center gap-1">
+                        <YoutubeIcon className="w-2.5 h-2.5" /> YouTube
+                      </span>
                     </div>
                   ) : isInstagram ? (
-                    <div className="flex flex-col items-center justify-center text-white/90 gap-2 bg-gradient-to-tr from-amber-600 via-rose-600 to-purple-800 w-full h-full p-4 text-center">
-                      <InstagramIcon className="w-8 h-8 text-white" />
-                      <span className="text-xs font-semibold text-white">Instagram Reel / Post</span>
-                      <span className="text-[10px] text-white/80 font-mono truncate max-w-full">{item.url}</span>
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-tr from-yellow-500 via-pink-600 to-purple-800 text-white p-4 text-center">
+                      <InstagramIcon className="w-8 h-8 mb-2" />
+                      <span className="text-xs font-semibold">Instagram Reel / Post</span>
+                      <span className="text-[10px] opacity-80 truncate max-w-full mt-1">
+                        {item.caption || 'Social Post'}
+                      </span>
                     </div>
                   ) : isFacebook ? (
-                    <div className="flex flex-col items-center justify-center text-white/90 gap-2 bg-[#1877F2] w-full h-full p-4 text-center">
-                      <FacebookIcon className="w-8 h-8 text-white" />
-                      <span className="text-xs font-semibold text-white">Facebook Video / Reel</span>
-                      <span className="text-[10px] text-white/80 font-mono truncate max-w-full">{item.url}</span>
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-blue-600 text-white p-4 text-center">
+                      <FacebookIcon className="w-8 h-8 mb-2" />
+                      <span className="text-xs font-semibold">Facebook Reel / Video</span>
+                    </div>
+                  ) : isVideo ? (
+                    <div className="w-full h-full relative flex items-center justify-center bg-black">
+                      <video src={item.url} className="w-full h-full object-cover" muted />
+                      <span className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded font-semibold flex items-center gap-1">
+                        <Film className="w-2.5 h-2.5" /> Direct Video
+                      </span>
                     </div>
                   ) : (
                     <img
                       src={item.url}
-                      alt={item.caption || 'Hotel Gallery'}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      alt={item.caption || 'Palace gallery'}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   )}
 
-                  {/* Badge top-left */}
-                  <div className="absolute top-2 left-2 flex items-center gap-1.5">
-                    {isYoutube && (
-                      <span className="bg-red-600 text-white text-[9px] uppercase px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shadow">
-                        <YoutubeIcon className="w-3 h-3" /> YouTube
-                      </span>
-                    )}
-                    {isInstagram && (
-                      <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[9px] uppercase px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shadow">
-                        <InstagramIcon className="w-3 h-3" /> Insta Reel
-                      </span>
-                    )}
-                    {isFacebook && (
-                      <span className="bg-blue-600 text-white text-[9px] uppercase px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shadow">
-                        <FacebookIcon className="w-3 h-3" /> FB Video
-                      </span>
-                    )}
-                    {isVideo && (
-                      <span className="bg-[#0B1B3A] text-[#C9A24B] text-[9px] uppercase px-2 py-0.5 rounded-full font-bold flex items-center gap-1 border border-[#C9A24B]/30 shadow">
-                        <Play className="w-3 h-3" /> Video
-                      </span>
-                    )}
-                    {!isYoutube && !isInstagram && !isFacebook && !isVideo && (
-                      <span className="bg-[#0B1B3A]/80 text-white text-[9px] uppercase px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shadow backdrop-blur-xs">
-                        <ImageIcon className="w-3 h-3 text-[#C9A24B]" /> Image
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Category top-right */}
-                  <span className="absolute top-2 right-2 bg-black/60 text-white text-[9px] uppercase tracking-wider px-2 py-0.5 rounded">
+                  {/* Category Pill */}
+                  <span className="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
                     {item.category}
                   </span>
                 </div>
 
-                {/* Content & Actions */}
-                <div className="p-3 text-xs space-y-2">
-                  <p className="font-medium text-[#0B1B3A] truncate">
-                    {item.caption || 'Royal Blue Heaven Chamber'}
+                {/* Info footer */}
+                <div className="p-3">
+                  <p className="text-xs font-medium text-gray-800 truncate mb-1">
+                    {item.caption || 'Untitled photo'}
                   </p>
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between pt-2 border-t text-xs">
                     <a
                       href={item.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[10px] text-[#1A3FA3] hover:underline flex items-center gap-1 font-semibold"
                     >
-                      <ExternalLink className="w-3 h-3" /> Open Link
+                      <ExternalLink className="w-3 h-3" /> View Source
                     </a>
 
                     {/* Delete button */}
@@ -301,7 +334,7 @@ export default function GalleryAdminPage() {
             <ImageIcon className="w-8 h-8 text-gray-300 mx-auto" />
             <p>No gallery entries found in category "{activeCategory}".</p>
             <p className="text-[11px] text-gray-500">
-              Click the button above to upload photo/video or embed YouTube, Instagram Reels, and Facebook videos.
+              Click the button above to upload photo/video directly from device or embed YouTube/Instagram Reels.
             </p>
           </div>
         )}
@@ -310,9 +343,9 @@ export default function GalleryAdminPage() {
       {/* Add Media Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-sm shadow-2xl max-w-lg w-full p-6 space-y-4">
+          <div className="bg-white rounded-sm shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-3">
-              <h2 className="text-lg font-serif text-[#0B1B3A]">Add Media to Luxury Gallery</h2>
+              <h2 className="text-lg font-serif text-[#0B1B3A]">Add Media to Gallery</h2>
               <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-black">
                 ✕
               </button>
@@ -322,12 +355,12 @@ export default function GalleryAdminPage() {
             <div className="flex gap-2 p-1 bg-gray-100 rounded text-xs">
               <button
                 type="button"
-                onClick={() => setAddMode('url')}
+                onClick={() => setAddMode('upload')}
                 className={`flex-1 py-1.5 rounded font-medium transition-all ${
-                  addMode === 'url' ? 'bg-white shadow text-[#0B1B3A]' : 'text-gray-500'
+                  addMode === 'upload' ? 'bg-white shadow text-[#0B1B3A]' : 'text-gray-500'
                 }`}
               >
-                Direct Image / Video URL
+                Direct Device Gallery Upload
               </button>
               <button
                 type="button"
@@ -336,12 +369,74 @@ export default function GalleryAdminPage() {
                   addMode === 'embed' ? 'bg-white shadow text-[#0B1B3A]' : 'text-gray-500'
                 }`}
               >
-                YouTube / Instagram / Facebook Reel
+                YouTube / Instagram / FB Reel
               </button>
             </div>
 
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
-              {addMode === 'embed' ? (
+              {addMode === 'upload' ? (
+                <div>
+                  <label className="block text-gray-700 mb-1 font-semibold">
+                    Select Photo / Video from Device
+                  </label>
+                  {formData.url ? (
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 border rounded-sm">
+                      <div className="w-14 h-14 bg-gray-900 rounded overflow-hidden shrink-0 flex items-center justify-center">
+                        {formData.type === 'video' ? (
+                          <Film className="w-6 h-6 text-[#C9A24B]" />
+                        ) : (
+                          <img src={formData.url} alt="Selected" className="w-full h-full object-cover" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-emerald-700 font-medium text-[11px] flex items-center gap-1">
+                          <CheckCircle className="w-3.5 h-3.5" /> File Selected & Ready
+                        </p>
+                        <label className="cursor-pointer text-[11px] text-[#1A3FA3] hover:underline font-medium inline-block mt-1">
+                          Change file
+                          <input
+                            type="file"
+                            accept="image/*,video/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0]
+                              if (f) handleDeviceFileUpload(f)
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer border-2 border-dashed border-[#C9A24B]/50 hover:border-[#C9A24B] rounded-sm p-6 flex flex-col items-center justify-center text-center bg-gray-50/50 hover:bg-white transition-colors">
+                      {uploadingFile ? (
+                        <div className="flex items-center gap-2 text-xs text-[#0B1B3A] font-medium">
+                          <Loader2 className="w-5 h-5 animate-spin text-[#C9A24B]" />
+                          Uploading media from device...
+                        </div>
+                      ) : (
+                        <>
+                          <Upload className="w-8 h-8 text-[#C9A24B] mb-2" />
+                          <span className="text-xs font-semibold text-[#0B1B3A]">
+                            Click to Select from Device Gallery
+                          </span>
+                          <span className="text-[10px] text-gray-400 mt-1">
+                            Supports JPG, PNG, WEBP, MP4, MOV videos
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*,video/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0]
+                              if (f) handleDeviceFileUpload(f)
+                            }}
+                          />
+                        </>
+                      )}
+                    </label>
+                  )}
+                </div>
+              ) : (
                 <div>
                   <label className="block text-gray-700 mb-1 font-semibold">
                     Social Video / Reel Link
@@ -357,20 +452,6 @@ export default function GalleryAdminPage() {
                   <p className="text-[10px] text-gray-400 mt-1">
                     Supports YouTube Videos & Shorts, Instagram Reels & Posts, Facebook Watch Reels
                   </p>
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-gray-700 mb-1 font-semibold">
-                    Image / Video URL
-                  </label>
-                  <input
-                    type="url"
-                    required
-                    value={formData.url}
-                    onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                    placeholder="https://images.unsplash.com/... or https://res.cloudinary.com/..."
-                    className="w-full border p-2 rounded-sm"
-                  />
                 </div>
               )}
 
@@ -422,8 +503,8 @@ export default function GalleryAdminPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
-                  className="px-4 py-2 rounded-sm font-semibold text-[#0B1B3A]"
+                  disabled={submitting || uploadingFile || !formData.url}
+                  className="px-4 py-2 rounded-sm font-semibold text-[#0B1B3A] disabled:opacity-50"
                   style={{ background: '#C9A24B' }}
                 >
                   {submitting ? 'Saving...' : 'Add to Gallery'}

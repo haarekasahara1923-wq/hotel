@@ -48,10 +48,24 @@ export async function POST(req: NextRequest) {
     }
 
     if (!process.env.CLOUDINARY_CLOUD_NAME) {
-      return NextResponse.json({
-        error: 'Cloudinary environment variables not configured. You can add image/video URLs directly or configure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in your Vercel settings.',
-        configured: false,
-      }, { status: 400 })
+      // Local fallback: convert to base64 data URL so device uploads work immediately even without Cloudinary credentials
+      const bytes = await file.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+      const mime = file.type || 'image/jpeg'
+      const base64Url = `data:${mime};base64,${buffer.toString('base64')}`
+      const publicId = `local_${Date.now()}_${Math.random().toString(36).substring(7)}`
+
+      const media = await prisma.media.create({
+        data: {
+          url: base64Url,
+          publicId,
+          type: file.type.startsWith('video') ? 'video' : 'image',
+          alt: alt || file.name,
+          folder,
+          bytes: buffer.length,
+        },
+      })
+      return NextResponse.json(media)
     }
 
     const bytes = await file.arrayBuffer()
